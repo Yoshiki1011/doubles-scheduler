@@ -473,7 +473,8 @@
         <!-- 画像保存 -->
         <div id="image-area">
           <p>📷 下の画像を長押しして保存できます</p>
-          <canvas id="schedule-canvas"></canvas>
+          <canvas id="schedule-canvas" style="display:none"></canvas>
+          <img id="schedule-img" style="display:none;width:100%;border-radius:8px" alt="スケジュール表">
         </div>
         <button class="btn btn-image" style="margin-top:8px" onclick="generateImage()">
           📷 画像として保存する
@@ -1002,40 +1003,59 @@ function announce(gameIndex) {
 
 // ===== 画像生成 =====
 function generateImage() {
+  if (!schedule || schedule.length === 0) {
+    alert('先にスケジュールを生成してください。');
+    return;
+  }
+
   const canvas = document.getElementById('schedule-canvas');
   const ctx = canvas.getContext('2d');
 
-  const rowH = 36;
-  const teamW = 110;   // チーム名セル幅
-  const vsW   = 36;    // vs セル幅
-  const gameW = 52;    // 試合番号セル幅
-  const restW = 110;   // 休みセル幅
+  const rowH = 40;
+  const teamW = 120;   // チーム名セル幅
+  const vsW   = 40;    // vs セル幅
+  const gameW = 56;    // 試合番号セル幅
+  const restW = 120;   // 休みセル幅
   const padding = 16;
+
+  // デバイスピクセル比を考慮（Retinaディスプレイ対応）
+  const dpr = window.devicePixelRatio || 1;
 
   // 1コートあたりの幅 = teamW + vsW + teamW
   const courtW = teamW + vsW + teamW;
 
-  // 全体幅を計算
-  const totalW = gameW + numCourts * courtW + (numPlayers > numCourts * 4 ? restW : 0) + padding * 2;
-  const totalH = (schedule.length + 1) * rowH + padding * 2;
+  // 全体幅を計算（論理ピクセル）
+  const logicalW = gameW + numCourts * courtW + (numPlayers > numCourts * 4 ? restW : 0) + padding * 2;
+  const logicalH = (schedule.length + 1) * rowH + padding * 2;
 
-  canvas.width  = totalW;
-  canvas.height = totalH;
+  // Canvasの実ピクセルサイズ（高解像度対応）
+  canvas.width  = logicalW * dpr;
+  canvas.height = logicalH * dpr;
+  canvas.style.width  = logicalW + 'px';
+  canvas.style.height = logicalH + 'px';
+
+  // スケール適用
+  ctx.scale(dpr, dpr);
 
   // 背景
   ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillRect(0, 0, logicalW, logicalH);
 
   const drawCell = (text, x, y, w, h, bg, fg, bold) => {
     ctx.fillStyle = bg;
     ctx.fillRect(x, y, w, h);
     ctx.strokeStyle = '#dddddd';
+    ctx.lineWidth = 0.5;
     ctx.strokeRect(x, y, w, h);
     ctx.fillStyle = fg;
-    ctx.font = `${bold ? 'bold ' : ''}13px sans-serif`;
+    ctx.font = `${bold ? 'bold ' : ''}14px -apple-system, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(text, x + w / 2, y + h / 2, w - 4);
+    // テキストが長い場合は省略
+    const maxW = w - 6;
+    let displayText = text;
+    ctx.measureText(text).width > maxW && (displayText = text);
+    ctx.fillText(displayText, x + w / 2, y + h / 2, maxW);
   };
 
   const ox = padding;
@@ -1082,8 +1102,15 @@ function generateImage() {
     }
   }
 
+  // canvas を img タグに変換して表示（iOSで長押し保存しやすくする）
+  const dataUrl = canvas.toDataURL('image/png');
+  const imgEl = document.getElementById('schedule-img');
+  imgEl.src = dataUrl;
+  imgEl.style.display = 'block';
+  canvas.style.display = 'none';
+
   document.getElementById('image-area').style.display = 'block';
-  canvas.scrollIntoView({ behavior: 'smooth' });
+  document.getElementById('image-area').scrollIntoView({ behavior: 'smooth' });
 }
 
 // ===== 名前入力モーダル =====
