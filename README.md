@@ -4,7 +4,7 @@
 
 ## 🌐 デモ
 
-**👉 [GitHub Pages URL（デプロイ後に更新）]**
+**👉 [https://yoshiki1011.github.io/doubles-scheduler/](https://yoshiki1011.github.io/doubles-scheduler/)**
 
 ## ✨ 主な機能
 
