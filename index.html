@@ -233,36 +233,36 @@
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
       /* 右端にアナウンス列の幅分の余白を確保 */
-      margin-right: 44px;
+      margin-right: 68px;
     }
     /* アナウンス列を右端に固定表示 */
     .announce-fixed {
       position: absolute;
       top: 0;
       right: 0;
-      width: 44px;
+      width: 68px;
       border-left: 1px solid #ddd;
       background: white;
     }
     .announce-fixed table {
       border-collapse: collapse;
-      width: 44px;
+      width: 68px;
     }
     .announce-fixed th {
       background: #2c3e50;
       color: white;
       padding: 0 4px;
       text-align: center;
-      font-size: 0.75rem;
+      font-size: 0.65rem;
       height: 35px;
       line-height: 35px;
     }
     .announce-fixed td {
-      padding: 0 4px;
+      padding: 2px 3px;
       text-align: center;
       border-bottom: 1px solid #eee;
-      height: 35px;
-      line-height: 35px;
+      height: 70px;
+      vertical-align: middle;
     }
 
     .schedule-table {
@@ -317,6 +317,56 @@
     }
     .game-separator td {
       border-bottom: 2px solid #aaa;
+    }
+
+    /* ===== 試合状態スタイル ===== */
+    /* 完了した試合：グレーアウト */
+    .row-done td {
+      background: #f0f0f0 !important;
+      color: #bbb !important;
+      text-decoration: line-through;
+    }
+    .row-done .game-num-cell {
+      background: #ccc !important;
+      color: #999 !important;
+    }
+
+    /* 次の試合：ハイライト */
+    .row-next td {
+      background: #fffde7 !important;
+    }
+    .row-next .game-num-cell {
+      background: #f39c12 !important;
+      color: white !important;
+    }
+    .row-next .team-cell {
+      background: #fff9c4 !important;
+      color: #7d5a00 !important;
+    }
+    /* 次の試合の左端に矢印マーカー */
+    .row-next .game-num-cell::before {
+      content: '▶ ';
+      font-size: 0.7rem;
+    }
+
+    /* 終了ボタン */
+    .done-btn {
+      background: #27ae60;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 5px 8px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      white-space: nowrap;
+      display: block;
+      width: 100%;
+    }
+    .done-btn:active { opacity: 0.7; }
+    .done-btn.completed {
+      background: #ccc;
+      color: #999;
+      cursor: default;
     }
 
     /* アナウンスボタン */
@@ -512,6 +562,7 @@ let playerNames = {};    // {0: 'やまだ', 1: 'たなか', ...}
 let numPlayers = 0;
 let numCourts = 0;
 let editingPlayer = -1;
+let doneGames = new Set(); // 完了した試合のインデックス集合
 
 // ===== 入力バリデーション =====
 document.getElementById('courts').addEventListener('input', checkInputs);
@@ -881,6 +932,63 @@ function renderStats() {
   `;
 }
 
+// ===== 試合完了トグル =====
+function toggleDone(g) {
+  if (doneGames.has(g)) {
+    doneGames.delete(g);
+  } else {
+    doneGames.add(g);
+  }
+  applyRowStyles();
+  updateDoneBtns();
+}
+
+// 行スタイルを適用（完了・次の試合ハイライト）
+function applyRowStyles() {
+  const rows = document.querySelectorAll('#schedule-table tbody tr');
+  const announceRows = document.querySelectorAll('#announce-table tbody tr');
+
+  // 完了していない最初の試合を「次の試合」とする
+  let nextGame = -1;
+  for (let g = 0; g < schedule.length; g++) {
+    if (!doneGames.has(g)) { nextGame = g; break; }
+  }
+
+  rows.forEach((row, g) => {
+    row.classList.remove('row-done', 'row-next');
+    if (doneGames.has(g)) {
+      row.classList.add('row-done');
+    } else if (g === nextGame) {
+      row.classList.add('row-next');
+    }
+  });
+
+  // アナウンス固定列も同期
+  announceRows.forEach((row, g) => {
+    row.classList.remove('row-done', 'row-next');
+    if (doneGames.has(g)) {
+      row.classList.add('row-done');
+    } else if (g === nextGame) {
+      row.classList.add('row-next');
+    }
+  });
+}
+
+// 終了ボタンの表示を更新
+function updateDoneBtns() {
+  for (let g = 0; g < schedule.length; g++) {
+    const btn = document.getElementById(`done-btn-${g}`);
+    if (!btn) continue;
+    if (doneGames.has(g)) {
+      btn.textContent = '✓ 完了';
+      btn.classList.add('completed');
+    } else {
+      btn.textContent = '終了';
+      btn.classList.remove('completed');
+    }
+  }
+}
+
 // ===== スケジュールテーブル =====
 function renderScheduleTable() {
   const table = document.getElementById('schedule-table');
@@ -921,14 +1029,23 @@ function renderScheduleTable() {
   html += '</tbody>';
   table.innerHTML = html;
 
-  // 固定アナウンス列テーブル
+  // 固定アナウンス列テーブル（終了ボタン + アナウンスボタン）
   const announceTable = document.getElementById('announce-table');
-  let aHtml = '<thead><tr><th>📢</th></tr></thead><tbody>';
+  let aHtml = '<thead><tr><th style="font-size:0.65rem">終了/📢</th></tr></thead><tbody>';
   for (let g = 0; g < schedule.length; g++) {
-    aHtml += `<tr><td><button class="announce-btn" onclick="announce(${g})">▶</button></td></tr>`;
+    const isDone = doneGames.has(g);
+    aHtml += `<tr>
+      <td style="padding:2px 3px">
+        <button id="done-btn-${g}" class="done-btn${isDone ? ' completed' : ''}" onclick="toggleDone(${g})">${isDone ? '✓ 完了' : '終了'}</button>
+        <button class="announce-btn" style="margin-top:2px" onclick="announce(${g})">▶</button>
+      </td>
+    </tr>`;
   }
   aHtml += '</tbody>';
   announceTable.innerHTML = aHtml;
+
+  // スタイル適用
+  applyRowStyles();
 }
 
 // ===== 音声アナウンス =====
