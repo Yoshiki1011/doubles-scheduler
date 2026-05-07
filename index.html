@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>🏓 ダブルス組み合わせ表 v1.0.0</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Hiragino Sans', 'Meiryo', sans-serif;
+      background: #f0f4f8;
+      color: #333;
+      min-height: 100vh;
+    }
+
+    header {
+      background: linear-gradient(135deg, #1a5276, #2e86c1);
+      color: white;
+      padding: 16px 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+    header h1 { font-size: 1.3rem; font-weight: bold; }
+    header p  { font-size: 0.8rem; opacity: 0.85; margin-top: 4px; }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    .panel {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .panel-header {
+      background: #2e86c1;
+      color: white;
+      padding: 10px 16px;
+      font-weight: bold;
+      font-size: 0.9rem;
+    }
+    .panel-body { padding: 16px; }
+
+    /* ===== 入力フォーム ===== */
+    .input-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .input-group {
+      flex: 1;
+    }
+    .input-group label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: bold;
+      color: #555;
+      margin-bottom: 4px;
+    }
+    .input-group input[type="number"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      text-align: center;
+      transition: border-color 0.2s;
+    }
+    .input-group input:focus {
+      outline: none;
+      border-color: #2e86c1;
+    }
+    .input-hint {
+      font-size: 0.72rem;
+      color: #999;
+      margin-top: 3px;
+      text-align: center;
+    }
+
+    /* ===== エラー ===== */
+    .error-box {
+      background: #fff3f3;
+      border: 1px solid #ffaaaa;
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: #cc0000;
+      font-size: 0.85rem;
+      margin-bottom: 12px;
+      display: none;
+    }
+
+    /* ===== ボタン ===== */
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 8px;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary {
+      background: linear-gradient(135deg, #1a5276, #2e86c1);
+      color: white;
+    }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-add {
+      background: linear-gradient(135deg, #1e8449, #27ae60);
+      color: white;
+    }
+    .btn-add:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ===== 選手名エリア ===== */
+    .player-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+    .player-chip {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    .player-num {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #2e86c1;
+      color: white;
+      font-weight: bold;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.15s;
+      flex-shrink: 0;
+    }
+    .player-num:active { transform: scale(0.9); }
+    .player-name-display {
+      font-size: 0.7rem;
+      color: #555;
+      text-align: center;
+      min-height: 16px;
+      word-break: break-all;
+    }
+
+    /* ===== 名前入力モーダル ===== */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: white;
+      border-radius: 16px;
+      padding: 24px 20px;
+      width: 90%;
+      max-width: 320px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+    .modal h3 {
+      font-size: 1rem;
+      margin-bottom: 12px;
+      color: #1a5276;
+    }
+    .modal input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 1rem;
+      margin-bottom: 8px;
+    }
+    .modal input:focus { outline: none; border-color: #2e86c1; }
+    .modal-hint {
+      font-size: 0.75rem;
+      color: #999;
+      margin-bottom: 12px;
+    }
+    .modal-error {
+      font-size: 0.78rem;
+      color: #cc0000;
+      margin-bottom: 8px;
+      min-height: 18px;
+    }
+    .modal-btns {
+      display: flex;
+      gap: 8px;
+    }
+    .modal-btns button {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .modal-ok { background: #2e86c1; color: white; }
+    .modal-cancel { background: #eee; color: #555; }
+    .modal-clear { background: #e74c3c; color: white; }
+
+    /* ===== スケジュールテーブル ===== */
+    #schedule-area { display: none; }
+
+    /* テーブル全体をラップ。アナウンス列は固定、それ以外がスクロール */
+    .schedule-outer {
+      position: relative;
+    }
+    .schedule-wrap {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      /* 右端にアナウンス列の幅分の余白を確保 */
+      margin-right: 44px;
+    }
+    /* アナウンス列を右端に固定表示 */
+    .announce-fixed {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 44px;
+      border-left: 1px solid #ddd;
+      background: white;
+    }
+    .announce-fixed table {
+      border-collapse: collapse;
+      width: 44px;
+    }
+    .announce-fixed th {
+      background: #2c3e50;
+      color: white;
+      padding: 0 4px;
+      text-align: center;
+      font-size: 0.75rem;
+      height: 35px;
+      line-height: 35px;
+    }
+    .announce-fixed td {
+      padding: 0 4px;
+      text-align: center;
+      border-bottom: 1px solid #eee;
+      height: 35px;
+      line-height: 35px;
+    }
+
+    .schedule-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      min-width: 320px;
+    }
+    .schedule-table th {
+      background: #2c3e50;
+      color: white;
+      padding: 0 6px;
+      text-align: center;
+      font-size: 0.75rem;
+      white-space: nowrap;
+      height: 35px;
+      line-height: 35px;
+    }
+    .schedule-table td {
+      padding: 0 6px;
+      text-align: center;
+      border-bottom: 1px solid #eee;
+      white-space: nowrap;
+      height: 35px;
+      line-height: 35px;
+    }
+    .game-num-cell {
+      background: #1a5276;
+      color: white;
+      font-weight: bold;
+      font-size: 0.85rem;
+    }
+    .court-cell {
+      background: #fef9e7;
+      color: #7d6608;
+      font-weight: bold;
+      font-size: 0.78rem;
+    }
+    .team-cell {
+      background: #eaf4fb;
+      color: #1a5276;
+      font-weight: bold;
+    }
+    .vs-cell {
+      color: #aaa;
+      font-size: 0.75rem;
+    }
+    .rest-cell {
+      background: #f9f9f9;
+      color: #999;
+      font-size: 0.75rem;
+    }
+    .game-separator td {
+      border-bottom: 2px solid #aaa;
+    }
+
+    /* アナウンスボタン */
+    .announce-btn {
+      background: #e67e22;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 5px 8px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .announce-btn:active { opacity: 0.7; }
+
+    /* ===== 画像保存エリア ===== */
+    #image-area {
+      display: none;
+      margin-top: 12px;
+    }
+    #image-area p {
+      font-size: 0.78rem;
+      color: #888;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+    #schedule-canvas {
+      width: 100%;
+      border-radius: 8px;
+      display: block;
+    }
+    .btn-image {
+      background: linear-gradient(135deg, #6c3483, #9b59b6);
+      color: white;
+    }
+
+    /* ===== 統計 ===== */
+    .stats-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 4px;
+    }
+    .stat-chip {
+      background: #eaf4fb;
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 0.78rem;
+      color: #1a5276;
+    }
+    .stat-chip strong { font-weight: bold; }
+
+    /* ===== ローディング ===== */
+    #loading {
+      display: none;
+      text-align: center;
+      padding: 30px;
+      color: #666;
+    }
+    .spinner {
+      width: 36px; height: 36px;
+      border: 4px solid #ddd;
+      border-top-color: #2e86c1;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 10px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 400px) {
+      .player-grid { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🏓 ダブルス組み合わせ表</h1>
+  <p>テニス・ピックルボール ダブルス自動スケジュール</p>
+</header>
+
+<div class="container">
+
+  <!-- 設定パネル -->
+  <div class="panel">
+    <div class="panel-header">⚙️ 設定</div>
+    <div class="panel-body">
+      <div class="input-row">
+        <div class="input-group">
+          <label>コート数</label>
+          <input type="number" id="courts" value="2" min="1" max="10" inputmode="numeric">
+          <div class="input-hint">1〜10面</div>
+        </div>
+        <div class="input-group">
+          <label>参加人数</label>
+          <input type="number" id="players" value="8" min="4" max="30" inputmode="numeric">
+          <div class="input-hint">4〜30人</div>
+        </div>
+      </div>
+
+      <div id="error-box" class="error-box"></div>
+
+      <button class="btn btn-primary" id="generate-btn" onclick="generate()">
+        🎯 10試合分を生成
+      </button>
+    </div>
+  </div>
+
+  <!-- 選手名パネル -->
+  <div class="panel" id="player-panel" style="display:none">
+    <div class="panel-header">👤 選手名（タップして入力）</div>
+    <div class="panel-body">
+      <div class="player-grid" id="player-grid"></div>
+      <div style="font-size:0.72rem;color:#aaa;margin-top:8px">※ ひらがな・カタカナで入力（音声アナウンスに使用）</div>
+    </div>
+  </div>
+
+  <!-- ローディング -->
+  <div id="loading">
+    <div class="spinner"></div>
+    <div>生成中...</div>
+  </div>
+
+  <!-- スケジュールエリア -->
+  <div id="schedule-area">
+
+    <!-- 統計 -->
+    <div class="panel">
+      <div class="panel-header">📊 統計</div>
+      <div class="panel-body">
+        <div class="stats-row" id="stats-row"></div>
+      </div>
+    </div>
+
+    <!-- スケジュール表 -->
+    <div class="panel">
+      <div class="panel-header">📋 スケジュール</div>
+      <div class="panel-body">
+        <div class="schedule-outer" id="schedule-outer">
+          <div class="schedule-wrap">
+            <table class="schedule-table" id="schedule-table"></table>
+          </div>
+          <div class="announce-fixed" id="announce-fixed">
+            <table id="announce-table"></table>
+          </div>
+        </div>
+
+        <div style="margin-top:12px">
+          <button class="btn btn-add" id="add-btn" onclick="addGames()">
+            ➕ 試合を追加（+5試合）
+          </button>
+        </div>
+
+        <!-- 画像保存 -->
+        <div id="image-area">
+          <p>📷 下の画像を長押しして保存できます</p>
+          <canvas id="schedule-canvas"></canvas>
+        </div>
+        <button class="btn btn-image" style="margin-top:8px" onclick="generateImage()">
+          📷 画像として保存する
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- 名前入力モーダル -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <h3 id="modal-title">選手名を入力</h3>
+    <input type="text" id="modal-input" placeholder="例：やまだ" maxlength="8"
+           oninput="validateNameInput(this)">
+    <div class="modal-hint">ひらがな・カタカナのみ（最大8文字）</div>
+    <div class="modal-error" id="modal-error"></div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal()">キャンセル</button>
+      <button class="modal-clear" onclick="clearName()">削除</button>
+      <button class="modal-ok" onclick="saveName()">OK</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== 状態管理 =====
+let schedule = [];       // [{courts: [{red:[i,j], white:[k,l]},...], resting:[...]}]
+let playerNames = {};    // {0: 'やまだ', 1: 'たなか', ...}
+let numPlayers = 0;
+let numCourts = 0;
+let editingPlayer = -1;
+
+// ===== 入力バリデーション =====
+document.getElementById('courts').addEventListener('input', checkInputs);
+document.getElementById('players').addEventListener('input', checkInputs);
+
+function checkInputs() {
+  const c = parseInt(document.getElementById('courts').value) || 0;
+  const p = parseInt(document.getElementById('players').value) || 0;
+  const errBox = document.getElementById('error-box');
+  const btn = document.getElementById('generate-btn');
+
+  if (c < 1 || c > 10) {
+    errBox.textContent = 'コート数は1〜10で入力してください。';
+    errBox.style.display = 'block';
+    btn.disabled = true;
+    return false;
+  }
+  if (p < 4 || p > 30) {
+    errBox.textContent = '人数は4〜30で入力してください。';
+    errBox.style.display = 'block';
+    btn.disabled = true;
+    return false;
+  }
+  if (c * 4 > p) {
+    errBox.textContent = `コート${c}面には${c*4}人必要ですが、参加人数が${p}人です。コート数を減らすか人数を増やしてください。`;
+    errBox.style.display = 'block';
+    btn.disabled = true;
+    return false;
+  }
+  errBox.style.display = 'none';
+  btn.disabled = false;
+  return true;
+}
+
+// ===== メイン生成 =====
+function generate() {
+  if (!checkInputs()) return;
+
+  numCourts  = parseInt(document.getElementById('courts').value);
+  numPlayers = parseInt(document.getElementById('players').value);
+
+  // 名前リセット（人数が変わった場合のみ）
+  if (Object.keys(playerNames).length !== numPlayers) {
+    playerNames = {};
+  }
+
+  schedule = [];
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('schedule-area').style.display = 'none';
+
+  setTimeout(() => {
+    try {
+      schedule = generateSchedule(numPlayers, numCourts, 10);
+      renderAll();
+    } catch(e) {
+      alert('生成に失敗しました: ' + e.message);
+    }
+    document.getElementById('loading').style.display = 'none';
+  }, 50);
+}
+
+// ===== 試合追加 =====
+function addGames() {
+  document.getElementById('loading').style.display = 'block';
+  setTimeout(() => {
+    try {
+      const added = generateSchedule(numPlayers, numCourts, 5, schedule);
+      schedule = schedule.concat(added);
+      renderAll();
+    } catch(e) {
+      alert('追加に失敗しました: ' + e.message);
+    }
+    document.getElementById('loading').style.display = 'none';
+  }, 50);
+}
+
+// ===== スケジュール生成アルゴリズム =====
+function generateSchedule(n, courts, numGames, existingSchedule = []) {
+  const playPerGame = courts * 4;
+  const restPerGame = n - playPerGame;
+
+  // 既存の統計を引き継ぐ
+  const restCount   = new Array(n).fill(0);  // 各選手の休み回数
+  const pairCount   = {};                     // ペア回数 "i-j" -> count
+  const oppCount    = {};                     // 対戦相手回数 "i-j" -> count
+
+  for (const game of existingSchedule) {
+    for (const r of game.resting) restCount[r]++;
+    for (const court of game.courts) {
+      const [r1, r2] = court.red;
+      const [w1, w2] = court.white;
+      addPair(pairCount, r1, r2);
+      addPair(pairCount, w1, w2);
+      addOpp(oppCount, r1, w1); addOpp(oppCount, r1, w2);
+      addOpp(oppCount, r2, w1); addOpp(oppCount, r2, w2);
+    }
+  }
+
+  const result = [];
+  const RETRY = 200;
+
+  for (let g = 0; g < numGames; g++) {
+    let bestGame = null;
+    let bestScore = Infinity;
+
+    for (let attempt = 0; attempt < RETRY; attempt++) {
+      // 1. 休み選手を選ぶ（休み回数が少ない順 + ランダム）
+      const resting = selectResting(n, restPerGame, restCount, g > 0 ? result : existingSchedule);
+      const playing = [];
+      for (let i = 0; i < n; i++) {
+        if (!resting.includes(i)) playing.push(i);
+      }
+
+      // 2. ペアを割り当てる
+      const pairs = assignPairs(playing, pairCount);
+      if (!pairs) continue;
+
+      // 3. コートに割り当てる
+      const courtAssign = assignCourts(pairs, courts, oppCount);
+      if (!courtAssign) continue;
+
+      // 4. スコア計算
+      const score = calcScore(courtAssign, pairCount, oppCount);
+      if (score < bestScore) {
+        bestScore = score;
+        bestGame = { courts: courtAssign, resting };
+      }
+      if (bestScore === 0) break;
+    }
+
+    if (!bestGame) {
+      // フォールバック：ランダムに割り当て
+      const resting = selectResting(n, restPerGame, restCount, result);
+      const playing = [];
+      for (let i = 0; i < n; i++) {
+        if (!resting.includes(i)) playing.push(i);
+      }
+      shuffle(playing);
+      const courtAssign = [];
+      for (let c = 0; c < courts; c++) {
+        courtAssign.push({
+          red:   [playing[c*4],   playing[c*4+1]],
+          white: [playing[c*4+2], playing[c*4+3]]
+        });
+      }
+      bestGame = { courts: courtAssign, resting };
+    }
+
+    // 統計更新
+    for (const r of bestGame.resting) restCount[r]++;
+    for (const court of bestGame.courts) {
+      const [r1, r2] = court.red;
+      const [w1, w2] = court.white;
+      addPair(pairCount, r1, r2);
+      addPair(pairCount, w1, w2);
+      addOpp(oppCount, r1, w1); addOpp(oppCount, r1, w2);
+      addOpp(oppCount, r2, w1); addOpp(oppCount, r2, w2);
+    }
+
+    result.push(bestGame);
+  }
+
+  return result;
+}
+
+// ===== 休み選手選択 =====
+function selectResting(n, restPerGame, restCount, prevGames) {
+  if (restPerGame === 0) return [];
+
+  // 直前の試合で休んだ人にペナルティ
+  const lastResting = prevGames.length > 0
+    ? prevGames[prevGames.length - 1].resting
+    : [];
+
+  // スコア = 休み回数 * 10 + (直前休みなら +5) + ランダム
+  const scored = [];
+  for (let i = 0; i < n; i++) {
+    const penalty = lastResting.includes(i) ? 5 : 0;
+    scored.push({ i, score: restCount[i] * 10 + penalty + Math.random() });
+  }
+  scored.sort((a, b) => a.score - b.score);
+  return scored.slice(0, restPerGame).map(x => x.i);
+}
+
+// ===== ペア割り当て =====
+function assignPairs(playing, pairCount) {
+  // シャッフルしてバックトラッキング
+  const shuffled = [...playing];
+  shuffle(shuffled);
+  return backtrackPairs(shuffled, 0, [], pairCount);
+}
+
+function backtrackPairs(players, idx, pairs, pairCount) {
+  if (idx >= players.length) return pairs;
+  if (idx + 1 >= players.length) return null;
+
+  const first = players[idx];
+  // 残りの選手からパートナーを探す
+  const candidates = players.slice(idx + 1);
+  // ペア回数が少ない順にソート（ランダム性も加味）
+  candidates.sort((a, b) => {
+    const ca = getPair(pairCount, first, a);
+    const cb = getPair(pairCount, first, b);
+    return (ca - cb) + (Math.random() - 0.5) * 0.5;
+  });
+
+  for (const partner of candidates) {
+    const remaining = players.slice(idx + 1).filter(p => p !== partner);
+    const result = backtrackPairs([first, partner, ...remaining], idx + 2, [...pairs, [first, partner]], pairCount);
+    if (result) return result;
+  }
+  return null;
+}
+
+// ===== コート割り当て =====
+function assignCourts(pairs, courts, oppCount) {
+  // pairs = [[a,b], [c,d], [e,f], [g,h], ...]  (courts*2 個)
+  // 各コートに2ペアを割り当てる
+  if (pairs.length !== courts * 2) return null;
+
+  // 全ペアのインデックス列挙
+  const pairIndices = pairs.map((_, i) => i);
+  let bestAssign = null;
+  let bestScore = Infinity;
+
+  // コート数が少ない場合は全順列、多い場合はランダムサンプリング
+  const maxPerms = courts <= 3 ? 720 : 100;
+  const perms = courts <= 3
+    ? getAllPairings(pairIndices)
+    : randomPairings(pairIndices, maxPerms);
+
+  for (const pairing of perms) {
+    const assign = [];
+    let score = 0;
+    for (let c = 0; c < courts; c++) {
+      const [p1, p2] = pairing[c];
+      const [a, b] = pairs[p1];
+      const [x, y] = pairs[p2];
+      assign.push({ red: [a, b], white: [x, y] });
+      score += getOpp(oppCount, a, x) + getOpp(oppCount, a, y)
+             + getOpp(oppCount, b, x) + getOpp(oppCount, b, y);
+    }
+    if (score < bestScore) {
+      bestScore = score;
+      bestAssign = assign;
+    }
+  }
+  return bestAssign;
+}
+
+// ===== 全ペアリング列挙（コート数が少ない場合） =====
+function getAllPairings(indices) {
+  if (indices.length === 2) return [[[indices[0], indices[1]]]];
+  const result = [];
+  const first = indices[0];
+  for (let i = 1; i < indices.length; i++) {
+    const partner = indices[i];
+    const rest = indices.slice(1).filter(x => x !== partner);
+    for (const sub of getAllPairings(rest)) {
+      result.push([[first, partner], ...sub]);
+    }
+  }
+  return result;
+}
+
+// ===== ランダムペアリング =====
+function randomPairings(indices, count) {
+  const result = [];
+  for (let i = 0; i < count; i++) {
+    const shuffled = [...indices];
+    shuffle(shuffled);
+    const pairing = [];
+    for (let j = 0; j < shuffled.length; j += 2) {
+      pairing.push([shuffled[j], shuffled[j+1]]);
+    }
+    result.push(pairing);
+  }
+  return result;
+}
+
+// ===== スコア計算 =====
+function calcScore(courtAssign, pairCount, oppCount) {
+  let score = 0;
+  for (const court of courtAssign) {
+    const [r1, r2] = court.red;
+    const [w1, w2] = court.white;
+    // ペア重複ペナルティ
+    score += getPair(pairCount, r1, r2) * 100;
+    score += getPair(pairCount, w1, w2) * 100;
+    // 対戦相手重複ペナルティ
+    score += getOpp(oppCount, r1, w1) * 10;
+    score += getOpp(oppCount, r1, w2) * 10;
+    score += getOpp(oppCount, r2, w1) * 10;
+    score += getOpp(oppCount, r2, w2) * 10;
+  }
+  return score;
+}
+
+// ===== ユーティリティ =====
+function pairKey(a, b) { return a < b ? `${a}-${b}` : `${b}-${a}`; }
+function addPair(map, a, b) { const k = pairKey(a,b); map[k] = (map[k]||0) + 1; }
+function getPair(map, a, b) { return map[pairKey(a,b)] || 0; }
+function addOpp(map, a, b)  { const k = pairKey(a,b); map[k] = (map[k]||0) + 1; }
+function getOpp(map, a, b)  { return map[pairKey(a,b)] || 0; }
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// ===== 選手名取得 =====
+function getName(i) {
+  return playerNames[i] || `${i + 1}`;
+}
+
+// ===== 全体レンダリング =====
+function renderAll() {
+  renderPlayerGrid();
+  renderStats();
+  renderScheduleTable();
+  document.getElementById('player-panel').style.display = 'block';
+  document.getElementById('schedule-area').style.display = 'block';
+  document.getElementById('image-area').style.display = 'none';
+}
+
+// ===== 選手グリッド =====
+function renderPlayerGrid() {
+  const grid = document.getElementById('player-grid');
+  grid.innerHTML = '';
+  for (let i = 0; i < numPlayers; i++) {
+    const chip = document.createElement('div');
+    chip.className = 'player-chip';
+    chip.innerHTML = `
+      <div class="player-num" onclick="openModal(${i})">${i+1}</div>
+      <div class="player-name-display" id="pname-${i}">${playerNames[i] || ''}</div>
+    `;
+    grid.appendChild(chip);
+  }
+}
+
+// ===== 統計 =====
+function renderStats() {
+  const totalGames = schedule.length;
+  const playPerGame = numCourts * 4;
+  const restPerGame = numPlayers - playPerGame;
+
+  // 各選手の出場回数
+  const playCounts = new Array(numPlayers).fill(0);
+  for (const game of schedule) {
+    for (const court of game.courts) {
+      for (const p of [...court.red, ...court.white]) playCounts[p]++;
+    }
+  }
+  const minPlay = Math.min(...playCounts);
+  const maxPlay = Math.max(...playCounts);
+
+  const row = document.getElementById('stats-row');
+  row.innerHTML = `
+    <div class="stat-chip">試合数 <strong>${totalGames}</strong></div>
+    <div class="stat-chip">コート <strong>${numCourts}</strong>面</div>
+    <div class="stat-chip">参加 <strong>${numPlayers}</strong>人</div>
+    <div class="stat-chip">出場 <strong>${minPlay}〜${maxPlay}</strong>回</div>
+    ${restPerGame > 0 ? `<div class="stat-chip">休み <strong>${restPerGame}</strong>人/試合</div>` : ''}
+  `;
+}
+
+// ===== スケジュールテーブル =====
+function renderScheduleTable() {
+  const table = document.getElementById('schedule-table');
+
+  // メインテーブル（アナウンス列なし）
+  let html = '<thead><tr>';
+  html += '<th>試合</th>';
+  for (let c = 0; c < numCourts; c++) {
+    html += `<th colspan="3">コート${c+1}</th>`;
+  }
+  if (numPlayers > numCourts * 4) html += '<th>休み</th>';
+  html += '</tr></thead><tbody>';
+
+  for (let g = 0; g < schedule.length; g++) {
+    const game = schedule[g];
+    html += '<tr>';
+    html += `<td class="game-num-cell">${g+1}</td>`;
+
+    for (let c = 0; c < numCourts; c++) {
+      const court = game.courts[c];
+      const r1 = getName(court.red[0]);
+      const r2 = getName(court.red[1]);
+      const w1 = getName(court.white[0]);
+      const w2 = getName(court.white[1]);
+      html += `<td class="team-cell">${r1}&amp;${r2}</td>`;
+      html += `<td class="vs-cell">vs</td>`;
+      html += `<td class="team-cell">${w1}&amp;${w2}</td>`;
+    }
+
+    if (numPlayers > numCourts * 4) {
+      const restNames = game.resting.map(i => getName(i)).join('・');
+      html += `<td class="rest-cell">${restNames}</td>`;
+    }
+
+    html += '</tr>';
+  }
+
+  html += '</tbody>';
+  table.innerHTML = html;
+
+  // 固定アナウンス列テーブル
+  const announceTable = document.getElementById('announce-table');
+  let aHtml = '<thead><tr><th>📢</th></tr></thead><tbody>';
+  for (let g = 0; g < schedule.length; g++) {
+    aHtml += `<tr><td><button class="announce-btn" onclick="announce(${g})">▶</button></td></tr>`;
+  }
+  aHtml += '</tbody>';
+  announceTable.innerHTML = aHtml;
+}
+
+// ===== 音声アナウンス =====
+
+// 番号を「〇番」読みに変換するユーティリティ
+const NUM_READING = ['いち','に','さん','よん','ご','ろく','なな','はち','きゅう','じゅう',
+  'じゅういち','じゅうに','じゅうさん','じゅうよん','じゅうご',
+  'じゅうろく','じゅうなな','じゅうはち','じゅうきゅう','にじゅう',
+  'にじゅういち','にじゅうに','にじゅうさん','にじゅうよん','にじゅうご',
+  'にじゅうろく','にじゅうなな','にじゅうはち','にじゅうきゅう','さんじゅう'];
+
+function getAnnounceLabel(i) {
+  // 名前が登録されていれば「名前さん」、なければ「〇番」
+  if (playerNames[i]) {
+    return playerNames[i] + 'さん';
+  }
+  const reading = NUM_READING[i] || `${i+1}`;
+  return reading + 'ばん';
+}
+
+function announce(gameIndex) {
+  if (!window.speechSynthesis) {
+    alert('このブラウザは音声読み上げに対応していません。');
+    return;
+  }
+  window.speechSynthesis.cancel();
+
+  const game = schedule[gameIndex];
+  const utterances = [];
+
+  // 「第N試合」
+  utterances.push(new SpeechSynthesisUtterance(`第${gameIndex + 1}試合。`));
+
+  for (let c = 0; c < game.courts.length; c++) {
+    const court = game.courts[c];
+    const r1 = getAnnounceLabel(court.red[0]);
+    const r2 = getAnnounceLabel(court.red[1]);
+    const w1 = getAnnounceLabel(court.white[0]);
+    const w2 = getAnnounceLabel(court.white[1]);
+
+    // 「コートN、A と B」
+    const u1 = new SpeechSynthesisUtterance(`コート${c+1}、${r1}と${r2}`);
+    u1.lang = 'ja-JP'; u1.rate = 0.9;
+    utterances.push(u1);
+
+    // 「対」（間を空けるため別発話）
+    const u2 = new SpeechSynthesisUtterance('対');
+    u2.lang = 'ja-JP'; u2.rate = 0.9;
+    utterances.push(u2);
+
+    // 「C と D。」
+    const u3 = new SpeechSynthesisUtterance(`${w1}と${w2}。`);
+    u3.lang = 'ja-JP'; u3.rate = 0.9;
+    utterances.push(u3);
+  }
+
+  if (game.resting.length > 0) {
+    const restLabels = game.resting.map(i => getAnnounceLabel(i)).join('、');
+    const ur = new SpeechSynthesisUtterance(`休みは、${restLabels}です。`);
+    ur.lang = 'ja-JP'; ur.rate = 0.9;
+    utterances.push(ur);
+  }
+
+  // 順番に発話（onend チェーン）
+  function speakNext(idx) {
+    if (idx >= utterances.length) return;
+    utterances[idx].onend = () => speakNext(idx + 1);
+    window.speechSynthesis.speak(utterances[idx]);
+  }
+  // 最初の発話だけ lang/rate を設定
+  utterances[0].lang = 'ja-JP';
+  utterances[0].rate = 0.9;
+  speakNext(0);
+}
+
+// ===== 画像生成 =====
+function generateImage() {
+  const canvas = document.getElementById('schedule-canvas');
+  const ctx = canvas.getContext('2d');
+
+  const rowH = 36;
+  const teamW = 110;   // チーム名セル幅
+  const vsW   = 36;    // vs セル幅
+  const gameW = 52;    // 試合番号セル幅
+  const restW = 110;   // 休みセル幅
+  const padding = 16;
+
+  // 1コートあたりの幅 = teamW + vsW + teamW
+  const courtW = teamW + vsW + teamW;
+
+  // 全体幅を計算
+  const totalW = gameW + numCourts * courtW + (numPlayers > numCourts * 4 ? restW : 0) + padding * 2;
+  const totalH = (schedule.length + 1) * rowH + padding * 2;
+
+  canvas.width  = totalW;
+  canvas.height = totalH;
+
+  // 背景
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const drawCell = (text, x, y, w, h, bg, fg, bold) => {
+    ctx.fillStyle = bg;
+    ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = '#dddddd';
+    ctx.strokeRect(x, y, w, h);
+    ctx.fillStyle = fg;
+    ctx.font = `${bold ? 'bold ' : ''}13px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, x + w / 2, y + h / 2, w - 4);
+  };
+
+  const ox = padding;
+  const oy = padding;
+
+  // ヘッダー行
+  let cx = ox;
+  drawCell('試合', cx, oy, gameW, rowH, '#2c3e50', '#ffffff', true);
+  cx += gameW;
+  for (let c = 0; c < numCourts; c++) {
+    drawCell(`コート${c+1}`, cx, oy, courtW, rowH, '#2c3e50', '#ffffff', true);
+    cx += courtW;
+  }
+  if (numPlayers > numCourts * 4) {
+    drawCell('休み', cx, oy, restW, rowH, '#2c3e50', '#ffffff', true);
+  }
+
+  // データ行
+  for (let g = 0; g < schedule.length; g++) {
+    const game = schedule[g];
+    const ry = oy + (g + 1) * rowH;
+    cx = ox;
+
+    drawCell(`${g+1}`, cx, ry, gameW, rowH, '#1a5276', '#ffffff', true);
+    cx += gameW;
+
+    for (let c = 0; c < numCourts; c++) {
+      const court = game.courts[c];
+      const r1 = getName(court.red[0]);
+      const r2 = getName(court.red[1]);
+      const w1 = getName(court.white[0]);
+      const w2 = getName(court.white[1]);
+      drawCell(`${r1}&${r2}`, cx, ry, teamW, rowH, '#eaf4fb', '#1a5276', true);
+      cx += teamW;
+      drawCell('vs', cx, ry, vsW, rowH, '#ffffff', '#aaaaaa', false);
+      cx += vsW;
+      drawCell(`${w1}&${w2}`, cx, ry, teamW, rowH, '#eaf4fb', '#1a5276', true);
+      cx += teamW;
+    }
+
+    if (numPlayers > numCourts * 4) {
+      const restNames = game.resting.map(i => getName(i)).join('・');
+      drawCell(restNames, cx, ry, restW, rowH, '#f9f9f9', '#999999', false);
+    }
+  }
+
+  document.getElementById('image-area').style.display = 'block';
+  canvas.scrollIntoView({ behavior: 'smooth' });
+}
+
+// ===== 名前入力モーダル =====
+function openModal(playerIndex) {
+  editingPlayer = playerIndex;
+  document.getElementById('modal-title').textContent = `選手 ${playerIndex + 1} の名前`;
+  document.getElementById('modal-input').value = playerNames[playerIndex] || '';
+  document.getElementById('modal-error').textContent = '';
+  document.getElementById('modal-overlay').classList.add('active');
+  setTimeout(() => document.getElementById('modal-input').focus(), 100);
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('active');
+  editingPlayer = -1;
+}
+
+function clearName() {
+  delete playerNames[editingPlayer];
+  closeModal();
+  renderAll();
+}
+
+function validateNameInput(input) {
+  const val = input.value;
+  const err = document.getElementById('modal-error');
+  if (val === '') { err.textContent = ''; return; }
+  if (!/^[ぁ-んァ-ヶー　 ]+$/.test(val)) {
+    err.textContent = 'ひらがな・カタカナのみ入力できます';
+  } else {
+    err.textContent = '';
+  }
+}
+
+function saveName() {
+  const val = document.getElementById('modal-input').value.trim();
+  if (val === '') {
+    delete playerNames[editingPlayer];
+    closeModal();
+    renderAll();
+    return;
+  }
+  if (!/^[ぁ-んァ-ヶー　 ]+$/.test(val)) {
+    document.getElementById('modal-error').textContent = 'ひらがな・カタカナのみ入力できます';
+    return;
+  }
+  playerNames[editingPlayer] = val;
+  closeModal();
+  renderAll();
+}
+
+// Enterキーで保存
+document.getElementById('modal-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') saveName();
+  if (e.key === 'Escape') closeModal();
+});
+
+// モーダル外クリックで閉じる
+document.getElementById('modal-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+});
+
+// 初期バリデーション
+checkInputs();
+</script>
+</body>
+</html>
