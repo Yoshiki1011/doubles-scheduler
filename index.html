@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>🏓 ダブルス組み合わせ表 v1.2.0</title>
+  <title>🏓 ダブルス組み合わせ表 v1.2.1</title>
   <!-- PWA -->
   <link rel="manifest" href="manifest.json">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -703,11 +703,20 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
       padding: 6px 12px;
       background: #f0f4f8;
       border-top: 1px solid #e0e8f0;
       font-size: 0.75rem;
       color: #888;
+    }
+    .save-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      margin-left: auto;
     }
     #save-indicator {
       color: #27ae60;
@@ -767,12 +776,12 @@
       <div class="input-row">
         <div class="input-group">
           <label>コート数</label>
-          <input type="number" id="courts" value="2" min="1" max="10" inputmode="numeric">
+          <input type="number" id="courts" value="1" min="1" max="10" inputmode="numeric">
           <div class="input-hint">1〜10面</div>
         </div>
         <div class="input-group">
           <label>参加人数</label>
-          <input type="number" id="players" value="8" min="4" max="30" inputmode="numeric">
+          <input type="number" id="players" value="6" min="4" max="30" inputmode="numeric">
           <div class="input-hint">4〜30人</div>
         </div>
       </div>
@@ -785,7 +794,10 @@
     </div>
     <div class="save-bar">
       <span id="save-indicator">✓ 保存済み</span>
-      <button class="btn-reset" onclick="confirmReset()">🗑 データをリセット</button>
+      <div class="save-actions">
+        <button class="btn-reset" onclick="resetGamesOnly()">🔄 試合だけリセット</button>
+        <button class="btn-reset" onclick="confirmReset()">🗑 データをリセット</button>
+      </div>
     </div>
   </div>
 
@@ -911,6 +923,8 @@ const IOS_AUDIO_ROUTE_HINT = 'iPhone / Safari では Bluetooth 接続中でも�
 
 // ===== ローカルストレージ保存・復元 =====
 const STORAGE_KEY = 'doubles_scheduler_v1';
+const DEFAULT_COURTS = 1;
+const DEFAULT_PLAYERS = 6;
 
 function saveState() {
   try {
@@ -929,23 +943,47 @@ function saveState() {
   }
 }
 
+function showBanner(message) {
+  const banner = document.getElementById('restore-banner');
+  if (!banner) return;
+  banner.innerHTML = message;
+  banner.style.display = 'block';
+  clearTimeout(banner._timer);
+  banner._timer = setTimeout(() => { banner.style.display = 'none'; }, 5000);
+}
+
+function renderPlayerPanelOnly() {
+  if (numPlayers > 0) {
+    renderPlayerGrid();
+    document.getElementById('player-panel').style.display = 'block';
+  } else {
+    document.getElementById('player-panel').style.display = 'none';
+  }
+  document.getElementById('schedule-area').style.display = 'none';
+  document.getElementById('image-area').style.display = 'none';
+  syncBulkPanelUI();
+}
+
 function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return false;
     const state = JSON.parse(raw);
-    if (!state.schedule || state.schedule.length === 0) return false;
 
-    schedule    = state.schedule;
+    schedule    = Array.isArray(state.schedule) ? state.schedule : [];
     playerNames = state.playerNames || {};
-    numPlayers  = state.numPlayers;
-    numCourts   = state.numCourts;
+    numPlayers  = state.numPlayers || 0;
+    numCourts   = state.numCourts || 0;
     doneGames   = new Set(state.doneGames || []);
 
-    document.getElementById('courts').value  = numCourts;
-    document.getElementById('players').value = numPlayers;
+    document.getElementById('courts').value  = numCourts || DEFAULT_COURTS;
+    document.getElementById('players').value = numPlayers || DEFAULT_PLAYERS;
 
-    renderAll();
+    if (schedule.length > 0) {
+      renderAll();
+    } else {
+      renderPlayerPanelOnly();
+    }
 
     // 復元バナー表示
     const savedAt = state.savedAt ? new Date(state.savedAt) : null;
@@ -953,10 +991,10 @@ function loadState() {
       month: 'numeric', day: 'numeric',
       hour: '2-digit', minute: '2-digit'
     }) : '';
-    const banner = document.getElementById('restore-banner');
-    banner.innerHTML = `📂 前回のデータを復元しました（${timeStr}保存）`;
-    banner.style.display = 'block';
-    setTimeout(() => { banner.style.display = 'none'; }, 5000);
+    const restoredLabel = schedule.length > 0
+      ? '📂 前回のデータを復元しました'
+      : '📂 前回の設定と選手名を復元しました';
+    showBanner(`${restoredLabel}${timeStr ? `（${timeStr}保存）` : ''}`);
 
     return true;
   } catch(e) {
@@ -983,11 +1021,25 @@ function confirmReset() {
   numPlayers  = 0;
   numCourts   = 0;
   doneGames   = new Set();
-  document.getElementById('courts').value  = 2;
-  document.getElementById('players').value = 8;
+  document.getElementById('courts').value  = DEFAULT_COURTS;
+  document.getElementById('players').value = DEFAULT_PLAYERS;
   document.getElementById('schedule-area').style.display = 'none';
   document.getElementById('player-panel').style.display  = 'none';
   checkInputs();
+}
+
+function resetGamesOnly() {
+  if (!schedule.length && !doneGames.size) {
+    showBanner('ℹ️ リセットする試合はありません。選手名はそのままです。');
+    return;
+  }
+  if (!confirm('試合表と進行状況だけをリセットしますか？\n選手名と現在のコート数・参加人数は残ります。')) return;
+  cancelAnnouncement(false);
+  schedule = [];
+  doneGames = new Set();
+  renderPlayerPanelOnly();
+  saveState();
+  showBanner('🔄 試合表だけリセットしました。選手名と設定は残っています。');
 }
 
 // ===== 入力バリデーション =====
