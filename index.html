@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>🏓 ダブルス組み合わせ表 v1.1.0</title>
+  <title>🏓 ダブルス組み合わせ表 v1.1.2</title>
   <!-- PWA -->
   <link rel="manifest" href="manifest.json">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -381,6 +381,48 @@
       white-space: nowrap;
     }
     .announce-btn:active { opacity: 0.7; }
+    .announce-btn.playing {
+      background: #c0392b;
+    }
+
+    .announce-status {
+      display: none;
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 0.78rem;
+      line-height: 1.6;
+    }
+    .announce-status.info {
+      display: block;
+      background: #eef6fb;
+      color: #1a5276;
+      border: 1px solid #c9dff0;
+    }
+    .announce-status.active {
+      display: block;
+      background: #fff7e8;
+      color: #9a5a00;
+      border: 1px solid #f3d39b;
+    }
+    .announce-status.success {
+      display: block;
+      background: #edf9f1;
+      color: #1e8449;
+      border: 1px solid #b9e5c7;
+    }
+    .announce-status.warn {
+      display: block;
+      background: #fff4e5;
+      color: #9c5f00;
+      border: 1px solid #f1cf98;
+    }
+    .announce-status.error {
+      display: block;
+      background: #fff1f1;
+      color: #c0392b;
+      border: 1px solid #efb5b0;
+    }
 
     /* ===== 画像保存エリア ===== */
     #image-area {
@@ -561,6 +603,10 @@
           </div>
         </div>
 
+        <div id="announce-status" class="announce-status info">
+          ▶ ボタンで読み上げできます。iPhone では Bluetooth 接続中でも読み上げ音声だけ本体スピーカーから鳴ることがあります。
+        </div>
+
         <div style="margin-top:12px">
           <button class="btn btn-add" id="add-btn" onclick="addGames()">
             ➕ 試合を追加（+5試合）
@@ -610,6 +656,11 @@ let numPlayers = 0;
 let numCourts = 0;
 let editingPlayer = -1;
 let doneGames = new Set(); // 完了した試合のインデックス集合
+let activeAnnouncementGame = null;
+
+const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+  || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const IOS_AUDIO_ROUTE_HINT = 'iPhone / Safari では Bluetooth 接続中でも読み上げ音声だけ本体スピーカーから鳴ることがあります。アプリ側から出力先は変更できません。';
 
 // ===== ローカルストレージ保存・復元 =====
 const STORAGE_KEY = 'doubles_scheduler_v1';
@@ -678,6 +729,7 @@ function showSaveIndicator() {
 
 function confirmReset() {
   if (!confirm('保存されたデータをすべて削除しますか？\n現在のスケジュールもリセットされます。')) return;
+  cancelAnnouncement(false);
   localStorage.removeItem(STORAGE_KEY);
   schedule    = [];
   playerNames = {};
@@ -1010,6 +1062,59 @@ function getName(i) {
   return playerNames[i] || `${i + 1}`;
 }
 
+function setAnnounceStatus(type, message) {
+  const el = document.getElementById('announce-status');
+  if (!el) return;
+  el.className = `announce-status ${type}`;
+  el.textContent = message;
+}
+
+function resetAnnounceStatus() {
+  const message = IS_IOS
+    ? `▶ ボタンで読み上げできます。${IOS_AUDIO_ROUTE_HINT}`
+    : '▶ ボタンで試合を読み上げできます。';
+  setAnnounceStatus('info', message);
+}
+
+function updateAnnounceButtons() {
+  for (let g = 0; g < schedule.length; g++) {
+    const btn = document.getElementById(`announce-btn-${g}`);
+    if (!btn) continue;
+    const isPlaying = g === activeAnnouncementGame;
+    btn.classList.toggle('playing', isPlaying);
+    btn.textContent = isPlaying ? '■' : '▶';
+    btn.setAttribute('aria-label', isPlaying ? `第${g + 1}試合の読み上げを停止` : `第${g + 1}試合を読み上げ`);
+  }
+}
+
+function cancelAnnouncement(updateStatus = true) {
+  const wasPlaying = activeAnnouncementGame !== null;
+  activeAnnouncementGame = null;
+  updateAnnounceButtons();
+  if (window.speechSynthesis) {
+    window.speechSynthesis.cancel();
+  }
+  if (updateStatus && wasPlaying) {
+    setAnnounceStatus('info', '読み上げを停止しました。');
+  }
+}
+
+function getPreferredJapaneseVoice() {
+  if (!window.speechSynthesis) return null;
+  const voices = window.speechSynthesis.getVoices();
+  return voices.find(v => v.lang === 'ja-JP')
+    || voices.find(v => v.lang && v.lang.startsWith('ja'))
+    || null;
+}
+
+function createUtterance(text, voice) {
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'ja-JP';
+  utterance.rate = 0.9;
+  if (voice) utterance.voice = voice;
+  return utterance;
+}
+
 // ===== 全体レンダリング =====
 function renderAll() {
   renderPlayerGrid();
@@ -1018,6 +1123,7 @@ function renderAll() {
   document.getElementById('player-panel').style.display = 'block';
   document.getElementById('schedule-area').style.display = 'block';
   document.getElementById('image-area').style.display = 'none';
+  resetAnnounceStatus();
 }
 
 // ===== 選手グリッド =====
@@ -1167,7 +1273,7 @@ function renderScheduleTable() {
     aHtml += `<tr>
       <td style="padding:2px 3px">
         <button id="done-btn-${g}" class="done-btn${isDone ? ' completed' : ''}" onclick="toggleDone(${g})">${isDone ? '✓ 完了' : '終了'}</button>
-        <button class="announce-btn" style="margin-top:2px" onclick="announce(${g})">▶</button>
+        <button id="announce-btn-${g}" class="announce-btn${activeAnnouncementGame === g ? ' playing' : ''}" style="margin-top:2px" onclick="announce(${g})">${activeAnnouncementGame === g ? '■' : '▶'}</button>
       </td>
     </tr>`;
   }
@@ -1176,6 +1282,7 @@ function renderScheduleTable() {
 
   // スタイル適用
   applyRowStyles();
+  updateAnnounceButtons();
 }
 
 // ===== 音声アナウンス =====
@@ -1198,16 +1305,23 @@ function getAnnounceLabel(i) {
 
 function announce(gameIndex) {
   if (!window.speechSynthesis) {
+    setAnnounceStatus('error', 'このブラウザは音声読み上げに対応していません。');
     alert('このブラウザは音声読み上げに対応していません。');
     return;
   }
-  window.speechSynthesis.cancel();
+  if (activeAnnouncementGame === gameIndex && window.speechSynthesis.speaking) {
+    cancelAnnouncement();
+    return;
+  }
+
+  cancelAnnouncement(false);
 
   const game = schedule[gameIndex];
   const utterances = [];
+  const voice = getPreferredJapaneseVoice();
 
   // 「第N試合」
-  utterances.push(new SpeechSynthesisUtterance(`第${gameIndex + 1}試合。`));
+  utterances.push(createUtterance(`第${gameIndex + 1}試合。`, voice));
 
   for (let c = 0; c < game.courts.length; c++) {
     const court = game.courts[c];
@@ -1217,38 +1331,60 @@ function announce(gameIndex) {
     const w2 = getAnnounceLabel(court.white[1]);
 
     // 「コートN、A と B」
-    const u1 = new SpeechSynthesisUtterance(`コート${c+1}、${r1}と${r2}`);
-    u1.lang = 'ja-JP'; u1.rate = 0.9;
+    const u1 = createUtterance(`コート${c+1}、${r1}と${r2}`, voice);
     utterances.push(u1);
 
     // 「対」（間を空けるため別発話）
-    const u2 = new SpeechSynthesisUtterance('対');
-    u2.lang = 'ja-JP'; u2.rate = 0.9;
+    const u2 = createUtterance('対', voice);
     utterances.push(u2);
 
     // 「C と D。」
-    const u3 = new SpeechSynthesisUtterance(`${w1}と${w2}。`);
-    u3.lang = 'ja-JP'; u3.rate = 0.9;
+    const u3 = createUtterance(`${w1}と${w2}。`, voice);
     utterances.push(u3);
   }
 
   if (game.resting.length > 0) {
     const restLabels = game.resting.map(i => getAnnounceLabel(i)).join('、');
-    const ur = new SpeechSynthesisUtterance(`休みは、${restLabels}です。`);
-    ur.lang = 'ja-JP'; ur.rate = 0.9;
+    const ur = createUtterance(`休みは、${restLabels}です。`, voice);
     utterances.push(ur);
   }
 
+  activeAnnouncementGame = gameIndex;
+  updateAnnounceButtons();
+  setAnnounceStatus('active', `第${gameIndex + 1}試合を読み上げています。${IS_IOS ? ` ${IOS_AUDIO_ROUTE_HINT}` : ''}`);
+
   // 順番に発話（onend チェーン）
   function speakNext(idx) {
-    if (idx >= utterances.length) return;
+    if (activeAnnouncementGame !== gameIndex) return;
+    if (idx >= utterances.length) {
+      activeAnnouncementGame = null;
+      updateAnnounceButtons();
+      setAnnounceStatus(IS_IOS ? 'warn' : 'success', `第${gameIndex + 1}試合の読み上げが終わりました。${IS_IOS ? ` ${IOS_AUDIO_ROUTE_HINT}` : ''}`);
+      return;
+    }
     utterances[idx].onend = () => speakNext(idx + 1);
-    window.speechSynthesis.speak(utterances[idx]);
+    utterances[idx].onerror = (event) => {
+      console.warn('音声読み上げ失敗:', event.error);
+      activeAnnouncementGame = null;
+      updateAnnounceButtons();
+      setAnnounceStatus('error', `読み上げに失敗しました。${event.error ? `(${event.error}) ` : ''}${IS_IOS ? IOS_AUDIO_ROUTE_HINT : 'もう一度▶を押して再試行してください。'}`);
+    };
+    try {
+      window.speechSynthesis.speak(utterances[idx]);
+    } catch (error) {
+      console.warn('音声読み上げ例外:', error);
+      activeAnnouncementGame = null;
+      updateAnnounceButtons();
+      setAnnounceStatus('error', `読み上げを開始できませんでした。${IS_IOS ? IOS_AUDIO_ROUTE_HINT : 'ブラウザの音声設定を確認して再試行してください。'}`);
+    }
   }
-  // 最初の発話だけ lang/rate を設定
-  utterances[0].lang = 'ja-JP';
-  utterances[0].rate = 0.9;
-  speakNext(0);
+
+  setTimeout(() => {
+    if (window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
+    }
+    speakNext(0);
+  }, 60);
 }
 
 // ===== 画像生成 =====
@@ -1437,7 +1573,7 @@ function saveName() {
 
 // Enterキーで保存
 document.getElementById('modal-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') saveName();
+  if (e.key === 'Enter' && !e.isComposing) saveName();
   if (e.key === 'Escape') closeModal();
 });
 
@@ -1458,6 +1594,10 @@ if ('serviceWorker' in navigator) {
 // 初期バリデーション＆復元
 checkInputs();
 loadState();
+resetAnnounceStatus();
+if (window.speechSynthesis) {
+  window.speechSynthesis.getVoices();
+}
 </script>
 </body>
 </html>
