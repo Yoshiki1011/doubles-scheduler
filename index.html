@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>🏓 ダブルス組み合わせ表 v1.1.2</title>
+  <title>🏓 ダブルス組み合わせ表 v1.2.0</title>
   <!-- PWA -->
   <link rel="manifest" href="manifest.json">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -160,6 +160,83 @@
       min-height: 16px;
       word-break: break-all;
     }
+    .name-tools {
+      margin-top: 14px;
+      border-top: 1px solid #eef2f7;
+      padding-top: 12px;
+    }
+    .name-tools-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .name-tools-title {
+      font-size: 0.8rem;
+      font-weight: bold;
+      color: #1a5276;
+    }
+    .btn-inline {
+      border: none;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 0.78rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .btn-subtle {
+      background: #eef6fb;
+      color: #1a5276;
+    }
+    .btn-ghost {
+      background: #f3f4f6;
+      color: #666;
+    }
+    .bulk-panel {
+      display: none;
+      background: #f8fbfe;
+      border: 1px solid #d8e8f5;
+      border-radius: 12px;
+      padding: 12px;
+    }
+    .bulk-panel.active {
+      display: block;
+    }
+    .bulk-panel textarea {
+      width: 100%;
+      min-height: 120px;
+      resize: vertical;
+      border: 2px solid #d8e8f5;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 0.92rem;
+      line-height: 1.5;
+      font-family: 'Hiragino Sans', 'Meiryo', sans-serif;
+      background: white;
+    }
+    .bulk-panel textarea:focus {
+      outline: none;
+      border-color: #2e86c1;
+    }
+    .bulk-hint {
+      margin-top: 8px;
+      font-size: 0.72rem;
+      color: #6b7280;
+      line-height: 1.6;
+    }
+    .bulk-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+    .bulk-error {
+      min-height: 18px;
+      margin-top: 8px;
+      font-size: 0.75rem;
+      color: #cc0000;
+    }
 
     /* ===== 名前入力モーダル ===== */
     .modal-overlay {
@@ -315,6 +392,11 @@
       color: #999;
       font-size: 0.75rem;
     }
+    .rest-cell.has-rest {
+      background: #fbf3e0;
+      color: #8a6100;
+      font-weight: bold;
+    }
     .game-separator td {
       border-bottom: 2px solid #aaa;
     }
@@ -333,15 +415,21 @@
 
     /* 次の試合：ハイライト */
     .row-next td {
-      background: #fffde7 !important;
+      background: #fff9d6 !important;
+      box-shadow: inset 0 0 0 2px #ffd166;
     }
     .row-next .game-num-cell {
       background: #f39c12 !important;
       color: white !important;
     }
     .row-next .team-cell {
-      background: #fff9c4 !important;
-      color: #7d5a00 !important;
+      background: #ffef99 !important;
+      color: #6b4f00 !important;
+    }
+    .row-next .rest-cell {
+      background: #ffe5a8 !important;
+      color: #7a5200 !important;
+      font-weight: bold;
     }
     /* 次の試合の左端に矢印マーカー */
     .row-next .game-num-cell::before {
@@ -460,6 +548,138 @@
       color: #1a5276;
     }
     .stat-chip strong { font-weight: bold; }
+    .progress-panel {
+      background: linear-gradient(160deg, #16324f, #245b84);
+      color: white;
+      overflow: hidden;
+    }
+    .progress-panel .panel-header {
+      background: rgba(255,255,255,0.08);
+    }
+    .progress-panel .panel-body {
+      padding: 18px 16px;
+    }
+    .progress-topline {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .progress-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.14);
+      font-size: 0.74rem;
+      font-weight: bold;
+    }
+    .progress-summary {
+      font-size: 0.82rem;
+      opacity: 0.92;
+    }
+    .progress-card-grid {
+      display: grid;
+      grid-template-columns: 1.35fr 1fr;
+      gap: 12px;
+    }
+    .progress-card {
+      border-radius: 16px;
+      padding: 14px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.12);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+    }
+    .progress-card.primary {
+      background: linear-gradient(145deg, rgba(255,214,102,0.22), rgba(255,255,255,0.08));
+      border-color: rgba(255,214,102,0.32);
+    }
+    .progress-kicker {
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+      opacity: 0.82;
+      text-transform: uppercase;
+    }
+    .progress-title {
+      margin-top: 6px;
+      font-size: 1.3rem;
+      font-weight: bold;
+    }
+    .progress-court-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .progress-court {
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.1);
+    }
+    .progress-court-name {
+      font-size: 0.72rem;
+      opacity: 0.85;
+      margin-bottom: 4px;
+    }
+    .progress-matchup {
+      font-size: 1rem;
+      font-weight: bold;
+      line-height: 1.45;
+    }
+    .progress-vs {
+      display: inline-block;
+      margin: 0 6px;
+      font-size: 0.74rem;
+      color: #ffd166;
+      vertical-align: middle;
+    }
+    .progress-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+    .progress-actions .btn-inline {
+      background: rgba(255,255,255,0.15);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.18);
+    }
+    .progress-side-list {
+      display: grid;
+      gap: 12px;
+    }
+    .progress-mini-label {
+      font-size: 0.72rem;
+      opacity: 0.78;
+      margin-bottom: 6px;
+    }
+    .progress-mini-value {
+      font-size: 0.96rem;
+      font-weight: bold;
+      line-height: 1.5;
+    }
+    .rest-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .rest-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.16);
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
+    .progress-empty {
+      font-size: 0.9rem;
+      line-height: 1.7;
+      opacity: 0.92;
+    }
 
     /* ===== ローディング ===== */
     #loading {
@@ -521,6 +741,11 @@
     @media (max-width: 400px) {
       .player-grid { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); }
     }
+    @media (max-width: 640px) {
+      .progress-card-grid {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
@@ -569,6 +794,22 @@
     <div class="panel-header">👤 選手名（タップして入力）</div>
     <div class="panel-body">
       <div class="player-grid" id="player-grid"></div>
+      <div class="name-tools">
+        <div class="name-tools-head">
+          <div class="name-tools-title">まとめて入力</div>
+          <button class="btn-inline btn-subtle" id="bulk-toggle-btn" onclick="toggleBulkPanel()">📝 一括入力を開く</button>
+        </div>
+        <div id="bulk-panel" class="bulk-panel">
+          <textarea id="bulk-names-input" placeholder="1行に1人ずつ入力&#10;やまだ&#10;たなか&#10;さとう&#10;&#10;または番号付きでもOK&#10;1 やまだ&#10;4 すずき"></textarea>
+          <div class="bulk-hint">行順のまま入力するか、`1 やまだ` のように番号付きでも入力できます。空行はスキップされます。</div>
+          <div class="bulk-actions">
+            <button class="btn-inline btn-subtle" onclick="applyBulkNames()">反映する</button>
+            <button class="btn-inline btn-ghost" onclick="fillBulkNamesFromCurrent()">現在の名前を読み込む</button>
+            <button class="btn-inline btn-ghost" onclick="clearBulkNamesInput()">入力を消す</button>
+          </div>
+          <div id="bulk-names-error" class="bulk-error"></div>
+        </div>
+      </div>
       <div style="font-size:0.72rem;color:#aaa;margin-top:8px">※ ひらがな・カタカナで入力（音声アナウンスに使用）</div>
     </div>
   </div>
@@ -588,6 +829,11 @@
       <div class="panel-body">
         <div class="stats-row" id="stats-row"></div>
       </div>
+    </div>
+
+    <div class="panel progress-panel">
+      <div class="panel-header">🚦 進行モード</div>
+      <div class="panel-body" id="progress-panel-body"></div>
     </div>
 
     <!-- スケジュール表 -->
@@ -657,6 +903,7 @@ let numCourts = 0;
 let editingPlayer = -1;
 let doneGames = new Set(); // 完了した試合のインデックス集合
 let activeAnnouncementGame = null;
+let bulkPanelOpen = false;
 
 const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
   || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -1062,6 +1309,181 @@ function getName(i) {
   return playerNames[i] || `${i + 1}`;
 }
 
+function isValidPlayerName(name) {
+  return /^[ぁ-んァ-ヶー　 ]+$/.test(name);
+}
+
+function getNextGameIndex() {
+  for (let g = 0; g < schedule.length; g++) {
+    if (!doneGames.has(g)) return g;
+  }
+  return -1;
+}
+
+function getLastDoneGameIndex() {
+  let last = -1;
+  for (let g = 0; g < schedule.length; g++) {
+    if (doneGames.has(g)) last = g;
+  }
+  return last;
+}
+
+function buildCourtSummary(court) {
+  return {
+    red: `${getName(court.red[0])}・${getName(court.red[1])}`,
+    white: `${getName(court.white[0])}・${getName(court.white[1])}`
+  };
+}
+
+function renderProgressPanel() {
+  const panel = document.getElementById('progress-panel-body');
+  if (!panel) return;
+
+  const nextGameIndex = getNextGameIndex();
+  const lastDoneIndex = getLastDoneGameIndex();
+
+  if (schedule.length === 0) {
+    panel.innerHTML = '<div class="progress-empty">スケジュール生成後に、次の試合・休み・進行状況をここに大きく表示します。</div>';
+    return;
+  }
+
+  if (nextGameIndex === -1) {
+    panel.innerHTML = `
+      <div class="progress-topline">
+        <div class="progress-badge">✅ すべて完了</div>
+        <div class="progress-summary">${schedule.length}試合が完了しました</div>
+      </div>
+      <div class="progress-empty">おつかれさまでした。必要なら「試合を追加」で次の5試合を作れます。</div>
+    `;
+    return;
+  }
+
+  const game = schedule[nextGameIndex];
+  const lastDoneText = lastDoneIndex >= 0 ? `第${lastDoneIndex + 1}試合まで完了` : 'まだ開始前です';
+  const progressText = `${doneGames.size}/${schedule.length}試合完了`;
+  const courtsHtml = game.courts.map((court, idx) => {
+    const summary = buildCourtSummary(court);
+    return `
+      <div class="progress-court">
+        <div class="progress-court-name">コート${idx + 1}</div>
+        <div class="progress-matchup">${summary.red}<span class="progress-vs">VS</span>${summary.white}</div>
+      </div>
+    `;
+  }).join('');
+  const restingHtml = game.resting.length > 0
+    ? `<div class="rest-badges">${game.resting.map(i => `<span class="rest-badge">${getName(i)}</span>`).join('')}</div>`
+    : '<div class="progress-mini-value">休みなし</div>';
+
+  panel.innerHTML = `
+    <div class="progress-topline">
+      <div class="progress-badge">⏭ 次は第${nextGameIndex + 1}試合</div>
+      <div class="progress-summary">${progressText} / ${lastDoneText}</div>
+    </div>
+    <div class="progress-card-grid">
+      <div class="progress-card primary">
+        <div class="progress-kicker">Next Match</div>
+        <div class="progress-title">第${nextGameIndex + 1}試合</div>
+        <div class="progress-court-list">${courtsHtml}</div>
+        <div class="progress-actions">
+          <button class="btn-inline" onclick="announce(${nextGameIndex})">📢 読み上げ</button>
+          <button class="btn-inline" onclick="toggleDone(${nextGameIndex})">✅ この試合を終了</button>
+        </div>
+      </div>
+      <div class="progress-side-list">
+        <div class="progress-card">
+          <div class="progress-mini-label">休み</div>
+          ${restingHtml}
+        </div>
+        <div class="progress-card">
+          <div class="progress-mini-label">直前に終わった試合</div>
+          <div class="progress-mini-value">${lastDoneIndex >= 0 ? `第${lastDoneIndex + 1}試合` : 'まだありません'}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function syncBulkPanelUI() {
+  const panel = document.getElementById('bulk-panel');
+  const btn = document.getElementById('bulk-toggle-btn');
+  if (!panel || !btn) return;
+  panel.classList.toggle('active', bulkPanelOpen);
+  btn.textContent = bulkPanelOpen ? '🙈 一括入力を閉じる' : '📝 一括入力を開く';
+}
+
+function toggleBulkPanel() {
+  bulkPanelOpen = !bulkPanelOpen;
+  syncBulkPanelUI();
+  if (bulkPanelOpen) {
+    fillBulkNamesFromCurrent();
+  }
+}
+
+function fillBulkNamesFromCurrent() {
+  const input = document.getElementById('bulk-names-input');
+  if (!input) return;
+  const lines = [];
+  for (let i = 0; i < numPlayers; i++) {
+    lines.push(playerNames[i] || '');
+  }
+  input.value = lines.join('\n');
+  document.getElementById('bulk-names-error').textContent = '';
+}
+
+function clearBulkNamesInput() {
+  const input = document.getElementById('bulk-names-input');
+  if (!input) return;
+  input.value = '';
+  document.getElementById('bulk-names-error').textContent = '';
+}
+
+function applyBulkNames() {
+  const input = document.getElementById('bulk-names-input');
+  const errorEl = document.getElementById('bulk-names-error');
+  if (!input || !errorEl) return;
+
+  const lines = input.value.split(/\r?\n/);
+  const parsed = {};
+  let sequentialIndex = 0;
+
+  for (let lineNo = 0; lineNo < lines.length; lineNo++) {
+    const raw = lines[lineNo].trim();
+    if (!raw) {
+      sequentialIndex++;
+      continue;
+    }
+
+    let targetIndex = sequentialIndex;
+    let name = raw;
+    const numbered = raw.match(/^(\d{1,2})[\s　:：,-]+(.+)$/);
+    if (numbered) {
+      targetIndex = parseInt(numbered[1], 10) - 1;
+      name = numbered[2].trim();
+    }
+
+    if (targetIndex < 0 || targetIndex >= numPlayers) {
+      errorEl.textContent = `${lineNo + 1}行目の番号が範囲外です。`;
+      return;
+    }
+    if (!isValidPlayerName(name)) {
+      errorEl.textContent = `${lineNo + 1}行目はひらがな・カタカナのみ入力できます。`;
+      return;
+    }
+    parsed[targetIndex] = name;
+    sequentialIndex++;
+  }
+
+  const nextNames = {};
+  for (let i = 0; i < numPlayers; i++) {
+    if (parsed[i]) nextNames[i] = parsed[i];
+  }
+
+  playerNames = nextNames;
+  errorEl.textContent = '';
+  renderAll();
+  saveState();
+}
+
 function setAnnounceStatus(type, message) {
   const el = document.getElementById('announce-status');
   if (!el) return;
@@ -1119,10 +1541,12 @@ function createUtterance(text, voice) {
 function renderAll() {
   renderPlayerGrid();
   renderStats();
+  renderProgressPanel();
   renderScheduleTable();
   document.getElementById('player-panel').style.display = 'block';
   document.getElementById('schedule-area').style.display = 'block';
   document.getElementById('image-area').style.display = 'none';
+  syncBulkPanelUI();
   resetAnnounceStatus();
 }
 
@@ -1146,6 +1570,8 @@ function renderStats() {
   const totalGames = schedule.length;
   const playPerGame = numCourts * 4;
   const restPerGame = numPlayers - playPerGame;
+  const nextGameIndex = getNextGameIndex();
+  const remainingGames = nextGameIndex === -1 ? 0 : totalGames - doneGames.size;
 
   // 各選手の出場回数
   const playCounts = new Array(numPlayers).fill(0);
@@ -1163,6 +1589,8 @@ function renderStats() {
     <div class="stat-chip">コート <strong>${numCourts}</strong>面</div>
     <div class="stat-chip">参加 <strong>${numPlayers}</strong>人</div>
     <div class="stat-chip">出場 <strong>${minPlay}〜${maxPlay}</strong>回</div>
+    <div class="stat-chip">進行 <strong>${doneGames.size}</strong>完了 / <strong>${remainingGames}</strong>残り</div>
+    ${nextGameIndex >= 0 ? `<div class="stat-chip">次 <strong>第${nextGameIndex + 1}</strong>試合</div>` : '<div class="stat-chip">進行 <strong>完了</strong></div>'}
     ${restPerGame > 0 ? `<div class="stat-chip">休み <strong>${restPerGame}</strong>人/試合</div>` : ''}
   `;
 }
@@ -1176,6 +1604,7 @@ function toggleDone(g) {
   }
   applyRowStyles();
   updateDoneBtns();
+  renderProgressPanel();
   saveState();
 }
 
@@ -1256,7 +1685,7 @@ function renderScheduleTable() {
 
     if (numPlayers > numCourts * 4) {
       const restNames = game.resting.map(i => getName(i)).join('・');
-      html += `<td class="rest-cell">${restNames}</td>`;
+      html += `<td class="rest-cell${game.resting.length > 0 ? ' has-rest' : ''}">${restNames}</td>`;
     }
 
     html += '</tr>';
@@ -1546,7 +1975,7 @@ function validateNameInput(input) {
   const val = input.value;
   const err = document.getElementById('modal-error');
   if (val === '') { err.textContent = ''; return; }
-  if (!/^[ぁ-んァ-ヶー　 ]+$/.test(val)) {
+  if (!isValidPlayerName(val)) {
     err.textContent = 'ひらがな・カタカナのみ入力できます';
   } else {
     err.textContent = '';
@@ -1559,9 +1988,10 @@ function saveName() {
     delete playerNames[editingPlayer];
     closeModal();
     renderAll();
+    saveState();
     return;
   }
-  if (!/^[ぁ-んァ-ヶー　 ]+$/.test(val)) {
+  if (!isValidPlayerName(val)) {
     document.getElementById('modal-error').textContent = 'ひらがな・カタカナのみ入力できます';
     return;
   }
