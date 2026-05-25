@@ -1467,7 +1467,17 @@ function toggleBulkPanel() {
   bulkPanelOpen = !bulkPanelOpen;
   syncBulkPanelUI();
   if (bulkPanelOpen) {
-    fillBulkNamesFromCurrent();
+    const input = document.getElementById('bulk-names-input');
+    const errorEl = document.getElementById('bulk-names-error');
+    if (input && !input.value.trim()) {
+      input.value = '';
+    }
+    if (errorEl) {
+      errorEl.textContent = '';
+    }
+    setTimeout(() => {
+      if (input) input.focus();
+    }, 0);
   }
 }
 
