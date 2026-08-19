@@ -1105,6 +1105,12 @@ function generate() {
 
 // ===== 試合追加 =====
 function addGames() {
+  if (!checkInputs()) return;
+
+  // 画面の入力値を反映（追加前に人数・コート数が変更されている場合に備える）
+  numCourts  = parseInt(document.getElementById('courts').value);
+  numPlayers = parseInt(document.getElementById('players').value);
+
   document.getElementById('loading').style.display = 'block';
   setTimeout(() => {
     try {
@@ -1232,16 +1238,16 @@ function assignPairs(playing, pairCount) {
   // シャッフルしてバックトラッキング
   const shuffled = [...playing];
   shuffle(shuffled);
-  return backtrackPairs(shuffled, 0, [], pairCount);
+  return backtrackPairs(shuffled, pairCount);
 }
 
-function backtrackPairs(players, idx, pairs, pairCount) {
-  if (idx >= players.length) return pairs;
-  if (idx + 1 >= players.length) return null;
+function backtrackPairs(players, pairCount) {
+  if (players.length === 0) return [];
+  if (players.length === 1) return null;
 
-  const first = players[idx];
+  const first = players[0];
   // 残りの選手からパートナーを探す
-  const candidates = players.slice(idx + 1);
+  const candidates = players.slice(1);
   // ペア回数が少ない順にソート（ランダム性も加味）
   candidates.sort((a, b) => {
     const ca = getPair(pairCount, first, a);
@@ -1250,9 +1256,9 @@ function backtrackPairs(players, idx, pairs, pairCount) {
   });
 
   for (const partner of candidates) {
-    const remaining = players.slice(idx + 1).filter(p => p !== partner);
-    const result = backtrackPairs([first, partner, ...remaining], idx + 2, [...pairs, [first, partner]], pairCount);
-    if (result) return result;
+    const remaining = candidates.filter(p => p !== partner);
+    const result = backtrackPairs(remaining, pairCount);
+    if (result) return [[first, partner], ...result];
   }
   return null;
 }
