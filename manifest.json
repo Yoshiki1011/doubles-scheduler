@@ -1,6 +1,6 @@
 {
   "name": "ダブルス組み合わせ表",
-  "short_name": "ダブルス",
+  "short_name": "乱数表",
   "description": "テニス・ピックルボール ダブルス組み合わせ自動生成",
   "start_url": "/doubles-scheduler/",
   "display": "standalone",
