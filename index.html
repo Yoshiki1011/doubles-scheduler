@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>🏓 ダブルス組み合わせ表 v1.2.1</title>
+  <title>🏓 ダブルス組み合わせ表 v1.2.2</title>
   <!-- PWA -->
   <link rel="manifest" href="manifest.json">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -29,6 +29,15 @@
     }
     header h1 { font-size: 1.3rem; font-weight: bold; }
     header p  { font-size: 0.8rem; opacity: 0.85; margin-top: 4px; }
+    header .version-badge {
+      display: inline-block;
+      margin-top: 6px;
+      font-size: 0.7rem;
+      opacity: 0.75;
+      background: rgba(255,255,255,0.15);
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
 
     .container {
       max-width: 600px;
@@ -762,6 +771,7 @@
 <header>
   <h1>🏓 ダブルス組み合わせ表</h1>
   <p>テニス・ピックルボール ダブルス自動スケジュール</p>
+  <span class="version-badge">v1.2.2</span>
 </header>
 
 <div class="container">

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'doubles-scheduler-v1.2.1';
+const CACHE_NAME = 'doubles-scheduler-v1.2.2';
 const ASSETS = [
   '/doubles-scheduler/',
   '/doubles-scheduler/index.html',
