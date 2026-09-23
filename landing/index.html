@@ -239,32 +239,6 @@
   .feature h3{font-size:.98rem;margin:0 0 .4em;}
   .feature p{font-size:.86rem;color:var(--ink-soft);line-height:1.75;margin:0;}
 
-  /* demo */
-  .demo-band{background:var(--court-pale);}
-  .demo-panel{
-    background:var(--surface);border-radius:20px;box-shadow:var(--shadow);
-    padding:30px;display:grid;grid-template-columns:.85fr 1.15fr;gap:30px;
-  }
-  @media (max-width:820px){.demo-panel{grid-template-columns:1fr;}}
-  .demo-form label{
-    display:block;font-size:.78rem;font-weight:700;color:var(--ink-soft);
-    margin-bottom:6px;letter-spacing:.03em;
-  }
-  .demo-field{margin-bottom:18px;}
-  .demo-field input[type=range]{width:100%;}
-  .demo-field .val{
-    font-family:"Zen Maru Gothic";font-weight:700;color:var(--court-mid);font-size:1.1rem;
-  }
-  .demo-note{font-size:.76rem;color:var(--ink-soft);margin-top:2px;}
-  #demoOutput{border-radius:14px;overflow:hidden;border:1px solid var(--line);}
-  #demoOutput table{width:100%;border-collapse:collapse;font-size:.86rem;}
-  #demoOutput th,#demoOutput td{padding:10px 8px;text-align:center;border-bottom:1px solid var(--line);}
-  #demoOutput thead th{background:var(--court);color:#fff;font-weight:700;font-size:.78rem;}
-  #demoOutput td.game{font-weight:700;color:var(--court-mid);font-family:"Zen Maru Gothic";}
-  #demoOutput td.rest{color:var(--ink-soft);font-size:.8rem;}
-  #demoOutput tbody tr:last-child td{border-bottom:none;}
-  .demo-caption{font-size:.76rem;color:var(--ink-soft);margin-top:10px;}
-
   /* pwa band */
   .pwa-band{
     background:linear-gradient(135deg,var(--court) 0%, var(--court-mid) 100%);
@@ -305,7 +279,6 @@
         </p>
         <div class="cta-row">
           <a class="btn btn-primary" href="https://yoshiki1011.github.io/doubles-scheduler/">無料で使ってみる</a>
-          <a class="btn btn-ghost" href="#demo">その場で試す ↓</a>
         </div>
       </div>
       <div class="device" aria-hidden="true">
@@ -434,34 +407,6 @@
     </div>
   </section>
 
-  <section class="demo-band" id="demo">
-    <div class="wrap">
-      <div class="section-head">
-        <span class="eyebrow">その場で試す</span>
-        <h2>人数とコート数を動かして、試してみましょう。</h2>
-        <p>実際のアプリと同じ考え方（休憩が偏らないようにしながら、同じペア・同じ対戦相手をできるだけ避ける）で、その場で3試合分を組んでみます。</p>
-      </div>
-      <div class="demo-panel">
-        <div class="demo-form">
-          <div class="demo-field">
-            <label for="rangeCourts">コート数　<span class="val" id="valCourts">2</span>面</label>
-            <input type="range" id="rangeCourts" min="1" max="3" value="2" step="1">
-          </div>
-          <div class="demo-field">
-            <label for="rangePlayers">参加人数　<span class="val" id="valPlayers">9</span>人</label>
-            <input type="range" id="rangePlayers" min="5" max="12" value="9" step="1">
-            <div class="demo-note">このデモは最大3面・12人までです（本体のアプリは最大10面・30人まで対応しています）</div>
-          </div>
-          <button class="btn btn-primary" id="demoGenerate" style="width:100%;justify-content:center;">3試合を組んでみる</button>
-        </div>
-        <div>
-          <div id="demoOutput"></div>
-          <p class="demo-caption">※ 選手名はサンプルです。実際にお使いいただくときは、自分のサークルの名前を入力できます。</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
   <section>
     <div class="wrap">
       <div class="pwa-band">
@@ -507,135 +452,3 @@
   </footer>
 
 </main>
-
-<script>
-(function(){
-  "use strict";
-
-  function shuffle(arr){
-    for(let i=arr.length-1;i>0;i--){
-      const j=Math.floor(Math.random()*(i+1));
-      [arr[i],arr[j]]=[arr[j],arr[i]];
-    }
-    return arr;
-  }
-  function key(a,b){ return a<b ? a+"_"+b : b+"_"+a; }
-  function getCount(map,a,b){ return map[key(a,b)]||0; }
-  function bump(map,a,b){ const k=key(a,b); map[k]=(map[k]||0)+1; }
-
-  function selectResting(n, restPerGame, restCount, prevRest){
-    const players=[...Array(n).keys()];
-    const scored=players.map(p=>{
-      let score = restCount[p]*10 + Math.random()*5;
-      if(prevRest.has(p)) score += 5;
-      return {p, score};
-    });
-    scored.sort((a,b)=>a.score-b.score);
-    return scored.slice(0, restPerGame).map(s=>s.p);
-  }
-
-  function backtrackPairs(players, pairCount){
-    if(players.length===0) return [];
-    if(players.length===1) return null;
-    const first=players[0];
-    const candidates=players.slice(1);
-    candidates.sort((a,b)=>{
-      const ca=getCount(pairCount,first,a), cb=getCount(pairCount,first,b);
-      return (ca-cb) + (Math.random()-0.5)*0.5;
-    });
-    for(const partner of candidates){
-      const remaining=candidates.filter(p=>p!==partner);
-      const result=backtrackPairs(remaining, pairCount);
-      if(result) return [[first,partner], ...result];
-    }
-    return null;
-  }
-
-  const NAMES = ["あおい","ゆうと","かい","りん","まお","そら","ひな","けん","つばさ","みお","はると","ゆい"];
-
-  function generateGames(n, courts, numGames){
-    const restPerGame = n - courts*4;
-    const restCount = Array(n).fill(0);
-    const pairCount = {};
-    const oppCount = {};
-    let prevRest = new Set();
-    const games=[];
-
-    for(let g=0; g<numGames; g++){
-      const resting = selectResting(n, restPerGame, restCount, prevRest);
-      resting.forEach(p=>restCount[p]++);
-      const restSet = new Set(resting);
-      const playing = [...Array(n).keys()].filter(p=>!restSet.has(p));
-
-      let pairs=null;
-      for(let attempt=0; attempt<40 && !pairs; attempt++){
-        pairs = backtrackPairs(shuffle([...playing]), pairCount);
-      }
-      if(!pairs){
-        pairs=[];
-        const s=shuffle([...playing]);
-        for(let i=0;i<s.length;i+=2) pairs.push([s[i],s[i+1]]);
-      }
-      pairs.forEach(([a,b])=>bump(pairCount,a,b));
-
-      const shuffledPairs = shuffle([...pairs]);
-      const courtMatches=[];
-      for(let c=0;c<courts;c++){
-        const a=shuffledPairs[c*2], b=shuffledPairs[c*2+1];
-        if(a && b){
-          courtMatches.push([a,b]);
-          bump(oppCount,a[0],b[0]); bump(oppCount,a[0],b[1]);
-          bump(oppCount,a[1],b[0]); bump(oppCount,a[1],b[1]);
-        }
-      }
-      games.push({courtMatches, resting});
-      prevRest = restSet;
-    }
-    return games;
-  }
-
-  function nm(i){ return NAMES[i%NAMES.length]; }
-  function renderPair(pair){ return nm(pair[0])+"・"+nm(pair[1]); }
-
-  function render(games, courts){
-    let head = "<thead><tr><th>試合</th>";
-    for(let c=1;c<=courts;c++) head += "<th>コート"+c+"</th>";
-    head += "<th>休憩</th></tr></thead>";
-
-    let body = "<tbody>";
-    games.forEach((game, idx)=>{
-      body += "<tr><td class='game'>"+(idx+1)+"</td>";
-      for(let c=0;c<courts;c++){
-        const m = game.courtMatches[c];
-        body += "<td>" + (m ? renderPair(m[0])+" 対 "+renderPair(m[1]) : "—") + "</td>";
-      }
-      const restNames = game.resting.map(nm).join("・") || "—";
-      body += "<td class='rest'>"+restNames+"</td></tr>";
-    });
-    body += "</tbody>";
-
-    document.getElementById("demoOutput").innerHTML = "<table>"+head+body+"</table>";
-  }
-
-  function runDemo(){
-    const courts = parseInt(document.getElementById("rangeCourts").value, 10);
-    const players = parseInt(document.getElementById("rangePlayers").value, 10);
-    const minNeeded = courts*4;
-    if(players < minNeeded){
-      document.getElementById("demoOutput").innerHTML =
-        "<p style='padding:20px;color:var(--ink-soft);font-size:.9rem;'>"+courts+"面には最低"+minNeeded+"人必要です。参加人数を増やしてください。</p>";
-      return;
-    }
-    const games = generateGames(players, courts, 3);
-    render(games, courts);
-  }
-
-  const rc = document.getElementById("rangeCourts");
-  const rp = document.getElementById("rangePlayers");
-  rc.addEventListener("input", ()=>{ document.getElementById("valCourts").textContent = rc.value; });
-  rp.addEventListener("input", ()=>{ document.getElementById("valPlayers").textContent = rp.value; });
-  document.getElementById("demoGenerate").addEventListener("click", runDemo);
-
-  runDemo();
-})();
-</script>
