@@ -248,6 +248,11 @@
   @media (max-width:820px){.pwa-band{grid-template-columns:1fr;padding:32px 26px;}}
   .pwa-band h2{color:#fff;font-size:1.5rem;margin:.3em 0 .5em;}
   .pwa-band p{color:rgba(255,255,255,.85);line-height:1.85;font-size:.95rem;}
+  .pwa-steps-wrap{display:flex;flex-direction:column;gap:18px;}
+  .pwa-steps-title{
+    font-family:"Zen Maru Gothic";font-weight:700;font-size:.85rem;
+    color:var(--ball);margin-bottom:8px;
+  }
   .pwa-steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;}
   .pwa-steps li{
     background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);
@@ -418,11 +423,24 @@
             <a class="btn btn-primary" href="https://yoshiki1011.github.io/doubles-scheduler/">サイトを開く</a>
           </div>
         </div>
-        <ul class="pwa-steps">
-          <li><b>1.</b>&nbsp;Safariでサイトを開く</li>
-          <li><b>2.</b>&nbsp;共有ボタンをタップ</li>
-          <li><b>3.</b>&nbsp;「ホーム画面に追加」を選ぶ</li>
-        </ul>
+        <div class="pwa-steps-wrap">
+          <div>
+            <div class="pwa-steps-title">iPhone（Safari）</div>
+            <ul class="pwa-steps">
+              <li><b>1.</b>&nbsp;Safariでサイトを開く</li>
+              <li><b>2.</b>&nbsp;共有ボタンをタップ</li>
+              <li><b>3.</b>&nbsp;「ホーム画面に追加」を選ぶ</li>
+            </ul>
+          </div>
+          <div>
+            <div class="pwa-steps-title">Android（Chrome）</div>
+            <ul class="pwa-steps">
+              <li><b>1.</b>&nbsp;Chromeでサイトを開く</li>
+              <li><b>2.</b>&nbsp;右上の「⋮」をタップ</li>
+              <li><b>3.</b>&nbsp;「アプリをインストール」を選ぶ</li>
+            </ul>
+          </div>
+        </div>
       </div>
     </div>
   </section>
